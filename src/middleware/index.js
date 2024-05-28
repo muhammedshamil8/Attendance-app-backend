@@ -1,0 +1,35 @@
+const admin = require("../config/firebase");
+
+class Middleware {
+    async decodeToken(req, res, next) {
+        // Check if the 'Authorization' header exists
+        if (!req.headers.authorization) {
+            return res.status(401).json({ message: 'Unauthorized - Missing Authorization header' });
+        }
+
+        // Split the 'Authorization' header to extract the token
+        const tokenParts = req.headers.authorization.split(' ');
+
+        // Check if the 'Authorization' header has the expected format
+        if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+            return res.status(401).json({ message: 'Unauthorized - Invalid Authorization header format' });
+        }
+
+        const token = tokenParts[1];
+
+        try {
+            const decodedToken = await admin.auth().verifyIdToken(token);
+
+            console.log(decodedToken);
+            if (decodedToken) {
+                req.user = decodedToken;
+                return next();
+            }
+            return res.status(401).json({ message: 'Unauthorized - Invalid token' });
+        } catch (e) {
+            return res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
+}
+
+module.exports = new Middleware();
