@@ -7,12 +7,24 @@ const port = 5000;
 app.use(cors())
 
 
-app.use(middleware.decodeToken);
-
 app.get('/', (req, res) => {
     res.send('Hello World!');
 }
 );
+
+app.get('/tesing', (req, res) => {
+    res.send('yes it is working!');
+}
+);
+
+
+app.use(middleware.decodeToken);
+
+app.get('/checking', (req, res) => {
+    res.send('The token is valid!');
+}
+);
+
 
 app.get('/api/todos', (req, res) => {
     return res.json({
