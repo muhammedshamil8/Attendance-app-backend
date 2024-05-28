@@ -12,7 +12,7 @@ app.get('/', (req, res) => {
 }
 );
 
-app.get('/tesing', (req, res) => {
+app.get('/testing', (req, res) => {
     res.send('yes it is working!');
 }
 );
