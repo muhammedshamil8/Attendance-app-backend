@@ -1,10 +1,15 @@
 const express = require('express');
 var cors = require('cors');
 const middleware = require('./src/middleware');
+const admin = require('firebase-admin');
+const test = require('./src/routes/test');
+const auth = require('./src/routes/auth');
+
 const app = express();
 const port = 5000;
 
 app.use(cors())
+app.use(express.json());
 
 
 app.get('/', (req, res) => {
@@ -12,10 +17,29 @@ app.get('/', (req, res) => {
 }
 );
 
-app.get('/testing', (req, res) => {
-    res.send('yes it is working!');
+app.use("/testing" , test)
+
+app.use('/api/login',auth );
+app.use('/register', auth);
+
+// Middleware for role-based authorization
+function checkRole(role) {
+    return async (req, res, next) => {
+        const { uid } = req.user;
+        const userRecord = await admin.auth().getUser(uid);
+        const { customClaims } = userRecord;
+        if (customClaims && customClaims.role === role) {
+            next();
+        } else {
+            res.status(403).send('Forbidden');
+        }
+    };
 }
-);
+
+// Protected endpoint accessible only by users with 'admin' role
+app.get('/admin', checkRole('admin'), (req, res) => {
+    res.status(200).send('Welcome, Admin!');
+});
 
 
 app.use(middleware.decodeToken);
