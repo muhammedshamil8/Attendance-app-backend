@@ -1,6 +1,6 @@
 const express = require('express');
 var cors = require('cors');
-const middleware = require('./middleware');
+const middleware = require('./src/middleware');
 const app = express();
 const port = 5000;
 
