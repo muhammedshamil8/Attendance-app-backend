@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
     res.send('Hello World!, This is a attendance app  apis application.');
 }
 );
-app.use('test', test)
+// app.use('/test', test)
 app.use('/api/todos', todoRoutes);
 app.use('/api', authRoutes);
 app.use('/api/admin', middleware.decodeToken, middleware.checkRole('admin'), adminRoutes);
