@@ -3,16 +3,16 @@ const nodemailer = require('nodemailer');
 let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'iedcemeadeveloper@gmail.com',
-        pass: process.env.EMAIL_PASSWORD
+        user: 'emeaiedc@gmail.com',
+        pass: process.env.IEDC_EMAIL_PASSWORD
     }
 });
 
-async function sendEmail(to, subject, text, html, from) {
+async function sendIEDCEmail(to, subject, text, html) {
     try {
         let mailOptions = {
-            from: 'Mark!t <CTO@2024>',
-            replyTo: from,
+            from: 'IEDC EMEA ',
+            replyTo: 'emeaiedc@gmail.com',
             to: to,
             subject: subject,
             text: text,
@@ -26,4 +26,4 @@ async function sendEmail(to, subject, text, html, from) {
     }
 }
 
-module.exports = { sendEmail };
+module.exports = { sendIEDCEmail };
