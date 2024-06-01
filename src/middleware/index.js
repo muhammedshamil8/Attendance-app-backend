@@ -19,7 +19,7 @@ async function decodeToken(req, res, next) {
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
 
-        console.log(decodedToken);
+        // console.log(decodedToken);
         if (decodedToken) {
             req.user = decodedToken;
             return next();
@@ -32,12 +32,17 @@ async function decodeToken(req, res, next) {
 
 function checkRole(role) {
     return async (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized - No user found' });
+        }
         const { uid } = req.user;
         const userRecord = await admin.auth().getUser(uid);
         const { customClaims } = userRecord;
         if (customClaims && customClaims.role === role) {
+            console.log('Authorized');
             next();
         } else {
+            console.log('Forbidden');
             res.status(403).send('Forbidden');
         }
     };
