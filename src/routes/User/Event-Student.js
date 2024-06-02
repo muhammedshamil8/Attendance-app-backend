@@ -14,7 +14,7 @@ router.post('/create-student/add-to-event', async (req, res) => {
         const db = admin.firestore();
 
         // Check if the student with the given admissionNo already exists
-        // const studentRef = db.collection('students').doc(admissionNo);
+        const studentRef = db.collection('students').doc(admissionNo);
         // const studentDoc = await studentRef.get();
         // if (studentDoc.exists) {
         //     return res.status(400).json({ message: 'Student with this admission number already exists' });
