@@ -11,7 +11,7 @@ let transporter = nodemailer.createTransport({
 async function sendEmail(to, subject, text, html, from) {
     try {
         let mailOptions = {
-            from: 'Mark!t <CTO@2024>',
+            from: 'MARK !T <CTO@2024>',
             replyTo: from,
             to: to,
             subject: subject,
