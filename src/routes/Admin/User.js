@@ -56,26 +56,64 @@ router.post('/create-user', async (req, res) => {
 });
 
 // Delete a user
+// router.delete('/delete-user/:uid', async (req, res) => {
+//     const { uid } = req.params;
+
+//     try {
+//         // Delete the user using the Firebase Admin SDK
+//         await admin.auth().deleteUser(uid);
+
+//         // Delete the user document in Firestore
+//         const db = admin.firestore();
+//         await db.collection('users').doc(uid).delete();
+
+//         // Return success response
+//         res.status(200).json({ message: 'User deleted successfully' });
+//     } catch (error) {
+//         // Return error response
+//         console.error('Error deleting user:', error);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// }
+// );
+
+// Delete a user
 router.delete('/delete-user/:uid', async (req, res) => {
     const { uid } = req.params;
 
     try {
+        const db = admin.firestore();
+
+        // Fetch user's events
+        const eventsSnapshot = await db.collection('events').where('userId', '==', uid).get();
+        const batch = db.batch();
+
+        // Log each event and delete them
+        if (eventsSnapshot.empty) {
+            console.log(`No events found for user ${uid}`);
+        } else {
+            eventsSnapshot.forEach((doc) => {
+                console.log(`Deleting event:`, doc.data());
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            console.log(`All events for user ${uid} have been deleted.`);
+        }
+
         // Delete the user using the Firebase Admin SDK
         await admin.auth().deleteUser(uid);
 
         // Delete the user document in Firestore
-        const db = admin.firestore();
         await db.collection('users').doc(uid).delete();
 
         // Return success response
-        res.status(200).json({ message: 'User deleted successfully' });
+        res.status(200).json({ message: 'User and associated events deleted successfully' });
     } catch (error) {
         // Return error response
         console.error('Error deleting user:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
-}
-);
+});
 
 //  Update a user
 router.put('/update-user/:uid', async (req, res) => {
@@ -116,17 +154,36 @@ router.post('/accept', async (req, res) => {
         if (!req.body) {
             throw new Error('No request body provided');
         }
-
-        // console.log(req.body);
-        const { email, team_name, Nodal_Officer, password , phone_number } = req.body;
+        console.log(req.body);
+        const { email, team_name, Nodal_Officer, password, phone_number } = req.body;
 
         if (!email || !team_name || !Nodal_Officer || !password) {
             return res.status(400).json({ message: 'Missing required fields' });
-        }else if (!password || password.length < 6) {
+        } else if (!password || password.length < 6) {
             return res.status(400).json({ message: 'Password is required and must be atleast 6 character' });
         }
 
         const db = admin.firestore();
+
+
+        // Check if the email already exists
+        let userExists;
+        try {
+            userExists = await admin.auth().getUserByEmail(email);
+        } catch (error) {
+            if (error.code !== 'auth/user-not-found') {
+                throw error; // Rethrow unexpected errors
+            }
+        }
+
+        if (userExists) {
+            return res.status(400).json({ message: 'The email address is already in use by another account.' });
+        }
+
+        //  Accept the user account
+        await db.collection('NewAccountReq').doc(email).set({
+            Verification: 'Accepted',
+        }, { merge: true });
         // Create a new user account
         const userRecord = await admin.auth().createUser({
             email,
@@ -154,7 +211,7 @@ router.post('/accept', async (req, res) => {
         const link = 'https://attendance-collection.vercel.app/signin';
         const text = `Your account request has been accepted. You can now login to your account.`;
         const html = `<p>${text}</p><p>Click <a href="${link}">here</a> to login</p>`;
-        await sendIEDCEmail(email, subject, text , html);
+        await sendIEDCEmail(email, subject, text, html);
         res.status(200).json({
             message: 'user created successfully'
         });
@@ -190,8 +247,8 @@ router.post('/reject', async (req, res) => {
         const subject = 'Your Account Request has been rejected';
         const link = 'https://attendance-collection.vercel.app/contact';
         const text = `Your account request has been rejected. Please contact the admin for more information.`;
-        const html =  `<p>${text}</p><p>Click <a href="${link}">here</a> to contact the admin</p>`;
-        await sendIEDCEmail(email, subject, message , html);
+        const html = `<p>${text}</p><p>Click <a href="${link}">here</a> to contact the admin</p>`;
+        await sendIEDCEmail(email, subject, message, html);
         res.status(200).json({
             message: 'Rejection email sent successfully'
         });
@@ -202,7 +259,6 @@ router.post('/reject', async (req, res) => {
         });
     }
 });
-
 
 //  disable user
 router.patch('/disable-user/:uid', async (req, res) => {
